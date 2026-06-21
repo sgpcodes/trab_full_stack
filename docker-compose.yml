@@ -1,0 +1,49 @@
+services:
+  api:
+    build: .
+    container_name: trabfullstack-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/trabfullstack
+      MYSQL_HOST: mysql
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      - mongo
+      - mysql
+    volumes:
+      - ./src:/usr/src/app/src
+
+  mongo:
+    image: mongo:7
+    container_name: trabfullstack-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mysql:
+    image: mysql:8.0
+    container_name: trabfullstack-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-trabfullstack}
+      MYSQL_USER: ${MYSQL_USER:-appuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-apppassword}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mongo_data:
+  mysql_data:

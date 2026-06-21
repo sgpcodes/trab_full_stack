@@ -1,0 +1,44 @@
+services:
+  api-test:
+    build: .
+    container_name: trabfullstack-api-test
+    command: ["npm", "test"]
+    environment:
+      NODE_ENV: test
+      PORT: 3000
+      MONGO_URI: mongodb://mongo-test:27017/trabfullstack_test
+      MYSQL_HOST: mysql-test
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: trabfullstack_test
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+      JWT_SECRET: test-secret-key
+      JWT_EXPIRES_IN: 1h
+      ADMIN_BOOTSTRAP_SECRET: test-admin-secret
+    depends_on:
+      mongo-test:
+        condition: service_started
+      mysql-test:
+        condition: service_healthy
+
+  mongo-test:
+    image: mongo:7
+    container_name: trabfullstack-mongo-test
+    tmpfs:
+      - /data/db
+
+  mysql-test:
+    image: mysql:8.0
+    container_name: trabfullstack-mysql-test
+    tmpfs:
+      - /var/lib/mysql
+    environment:
+      MYSQL_DATABASE: trabfullstack_test
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+      MYSQL_ROOT_PASSWORD: rootpassword
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
